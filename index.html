@@ -1346,33 +1346,39 @@ var _rbData = null; // cached from last compute()
 function rbIncomAt(andyAge, d){
   if(!d) return 0;
   var mAge=gv('mag'), mRet=gv('mret'), mSSAge=gv('mssa');
-  var sepAge=gv('sep'), colAge=gv('col'), ssAge=gv('ssa');
+  var sepAge=gv('sep'), colAge=gv('col'), ssAge=gv('ssa'), swr=gv('swr')/100;
   var drawAge=gv('draw')||mRet;
   var mMegAge = mAge + (andyAge - CA);
   var total = 0;
-  // Portfolio SWR — starts at drawAge
-  if(andyAge >= drawAge) total += d.portWithdraw;
+  // Portfolio SWR — compute from actual portfolio balance at this age
+  if(andyAge >= drawAge){
+    var port = rbPortfolioAt(andyAge, d);
+    total += port * swr / 12;
+  }
   // Pension — starts at max(sepAge, colAge)
   if(andyAge >= Math.max(sepAge, colAge)) total += d.penMo;
   // Andy SS
   if(andyAge >= ssAge) total += d.yourSS;
-  // Megan SS
+  // Megan SS — use Megan's age equivalent
   if(mMegAge >= mSSAge) total += d.mSS;
-  // Health insurance deduction (post-retirement)
+  // Health insurance — deduct post-retirement
   if(andyAge >= Math.max(sepAge, mRet)) total -= d.hi.steady;
-  // Insurance premiums
+  // Life insurance premiums
   if(d.ins && d.ins.monthlyPremium > 0) total -= d.ins.monthlyPremium;
   return Math.round(total);
 }
 
 function rbPortfolioAt(andyAge, d){
   if(!d) return 0;
-  // Find closest age in portH
-  var portH = d.portH || [];
-  var closest = portH.find(function(p){ return p.age === andyAge; });
-  if(closest) return closest.val + (d.mPortH ? (d.mPortH.find(function(p){return p.age===(gv('mag')+(andyAge-CA));}) || {val:0}).val : 0);
-  // Fallback: last known
-  return d.totPort || 0;
+  var portH = d.portH || [], mPortH = d.mPortH || [];
+  // Andy portfolio at this age
+  var ap = portH.find(function(p){ return p.age === andyAge; });
+  var andyVal = ap ? ap.val : (portH.length ? portH[portH.length-1].val : 0);
+  // Megan portfolio — find by her equivalent age
+  var mMegAge = gv('mag') + (andyAge - CA);
+  var mp = mPortH.find(function(p){ return p.age === mMegAge; });
+  var meganVal = mp ? mp.val : (andyAge >= gv('mret') && mPortH.length ? mPortH[mPortH.length-1].val : 0);
+  return Math.round(andyVal + meganVal);
 }
 
 function rbUpdate(){
