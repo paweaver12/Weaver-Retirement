@@ -351,15 +351,24 @@ canvas{display:block;width:100%!important;}
       <div id="mr-da"><div class="sr"><label>$/yr</label><input class="si" id="imr-cd" type="number" value="0" step="500" oninput="u()"></div></div>
     </div>
     <div class="div"></div>
-    <div class="fl" style="margin-bottom:7px">Savings</div>
+    <div class="fl" style="margin-bottom:7px">Savings accounts</div>
     <div class="box">
-      <div class="bt">Household savings (HYSA / cash)</div>
-      <div class="fg"><div class="sr"><label>Balance</label><input class="si" id="icab" type="number" value="0" step="500" oninput="sv('ca-b',this.value)"></div><input type="range" min="0" max="200000" step="500" value="0" id="sca-b"></div>
-      <div class="fg"><div class="sr"><label>Return %</label><input class="si" id="icar" type="number" value="4.5" step="0.1" oninput="sv('ca-r',this.value)"></div><input type="range" min="0" max="10" step="0.1" value="4.5" id="sca-r"><p class="tip">Update as HYSA rates change</p></div>
+      <div class="bt">Paris Hi-way Credit Union (PHCU)</div>
+      <div class="fg"><div class="sr"><label>Balance</label><input class="si" id="icab" type="number" value="2000" step="100" oninput="sv('ca-b',this.value)"></div><input type="range" min="0" max="50000" step="100" value="2000" id="sca-b"></div>
+      <div class="fg"><div class="sr"><label>Dividend rate %</label><input class="si" id="icar" type="number" value="0.49" step="0.01" oninput="sv('ca-r',this.value)"></div><input type="range" min="0" max="6" step="0.01" value="0.49" id="sca-r"><p class="tip">Base dividend rate derived from Q1 2026 history (~0.49%). Extraordinary patronage dividends not included.</p></div>
       <div class="fl" style="margin:5px 0 4px">Annual contribution</div>
       <div class="tr"><button class="tg on" id="tca0" onclick="sac('ca-','p')">% of salary</button><button class="tg" id="tca1" onclick="sac('ca-','d')">$/yr</button></div>
       <div id="ca-pa"><div class="sr"><label>% of Andy's gross</label><input class="si" id="ica-cp" type="number" value="0.0" step="0.1" oninput="sv('ca-cp',this.value)"></div><input type="range" min="0" max="30" step="0.1" value="0" id="sca-cp"></div>
-      <div id="ca-da"><div class="sr"><label>$/yr</label><input class="si" id="ica-cd" type="number" value="0" step="500" oninput="u()"></div></div>
+      <div id="ca-da"><div class="sr"><label>$/yr</label><input class="si" id="ica-cd" type="number" value="0" step="100" oninput="u()"></div></div>
+    </div>
+    <div class="box">
+      <div class="bt">Discover Online Savings (HYSA)</div>
+      <div class="fg"><div class="sr"><label>Balance</label><input class="si" id="ica2b" type="number" value="8000" step="500" oninput="sv('ca2-b',this.value)"></div><input type="range" min="0" max="200000" step="500" value="8000" id="sca2-b"></div>
+      <div class="fg"><div class="sr"><label>APY %</label><input class="si" id="ica2r" type="number" value="3.10" step="0.05" oninput="sv('ca2-r',this.value)"></div><input type="range" min="0" max="8" step="0.05" value="3.10" id="sca2-r"><p class="tip">Current Discover APY as of May 2026. Variable — update as rates change.</p></div>
+      <div class="fl" style="margin:5px 0 4px">Annual contribution</div>
+      <div class="tr"><button class="tg" id="tca20" onclick="sac('ca2-','p')">% of salary</button><button class="tg on" id="tca21" onclick="sac('ca2-','d')">$/yr</button></div>
+      <div id="ca2-pa" style="display:none"><div class="sr"><label>% of Andy's gross</label><input class="si" id="ica2-cp" type="number" value="0.0" step="0.1" oninput="sv('ca2-cp',this.value)"></div><input type="range" min="0" max="30" step="0.1" value="0" id="sca2-cp"></div>
+      <div id="ca2-da"><div class="sr"><label>$/yr</label><input class="si" id="ica2-cd" type="number" value="2400" step="100" oninput="u()"></div><p class="tip">$200/mo = $2,400/yr</p></div>
     </div>
     <div id="extra-inv-list"></div>
     <button class="add-btn" onclick="addInvestment()">+ Add investment account</button>
@@ -523,7 +532,7 @@ var HIST=[
 var ov={}, psOn=false, salOpen=false, editYr=null;
 var mModes={b:'p',i:'p',c:'p'}, aMode='p';
 var m4cm='p', m4gm='p', dccm='d', dcgm='p';
-var acModes={at_:'p',ar_:'p',mt_:'p',mr_:'p','ca-':'p'};
+var acModes={at_:'p',ar_:'p',mt_:'p',mr_:'p','ca-':'p','ca2-':'d'};
 var peModes={e:'p',r:'p'};
 var policies=[], policyCount=0;
 var extraInvestments=[], extraInvCount=0;
@@ -542,7 +551,7 @@ var ID_MAP={
   'ar-b':'iarb','ar-r':'iarr','ar-cp':'iarcp',
   'mt-b':'imtb','mt-r':'imtr','mt-cp':'imtcp',
   'mr-b':'imrb','mr-r':'imrr','mr-cp':'imrcp',
-  'ca-b':'icab','ca-r':'icar','ca-cp':'ica-cp',
+  'ca-b':'icab','ca-r':'icar','ca-cp':'ica-cp','ca2-b':'ica2b','ca2-r':'ica2r','ca2-cp':'ica2-cp','ca2-cd':'ica2-cd',
   'swr':'iswr','infl':'iinfl','rtr':'irtr','page':'ipage',
   'h1':'ih1','h2':'ih2','h3':'ih3','h4':'ih4','h5':'ih5',
   'p1val':'ip1val','p1bal':'ip1bal','p1pmt':'ip1pmt','p1rate':'ip1rate','p1appr':'ip1appr',
@@ -930,14 +939,15 @@ function compute(){
   var retAge=psOn&&gv('pss')>0?Math.max(sepAge,gv('psr')):sepAge;
   var ytr=Math.max(1,retAge-CA);
   // Andy IRAs + savings
-  var atB=gv('at-b'),arB=gv('ar-b'),caB=gv('ca-b');
-  var atRR=gv('at-r')/100,arRR=gv('ar-r')/100,caRR=gv('ca-r')/100;
-  var portH=[{age:CA,val:Math.round(atB+arB+caB)}],penH=[],runCr=HIST.reduce(function(a,h){return a+h.cr;},0);
+  var atB=gv('at-b'),arB=gv('ar-b'),caB=gv('ca-b'),ca2B=gv('ca2-b');
+  var atRR=gv('at-r')/100,arRR=gv('ar-r')/100,caRR=gv('ca-r')/100,ca2RR=gv('ca2-r')/100;
+  var portH=[{age:CA,val:Math.round(atB+arB+caB+ca2B)}],penH=[],runCr=HIST.reduce(function(a,h){return a+h.cr;},0);
   for(var yr=1;yr<=ytr;yr++){
     var curAge=CA+yr,calYr=CY+yr,sal=andySal(calYr);
     atB=atB*(1+atRR)+acContrib('at-',calYr);
     arB=arB*(1+arRR)+acContrib('ar-',calYr);
     caB=caB*(1+caRR)+acContrib('ca-',calYr);
+    ca2B=ca2B*(1+ca2RR)+acContrib('ca2-',calYr);
     if(curAge<=sepAge){var dc=dcAt(calYr);atB+=dc.trad;arB+=dc.roth;}
     if(psOn&&gv('pss')>0&&curAge>sepAge&&curAge<=gv('psr')){
       var psnow=gv('pss')*Math.pow(1+gv('psg')/100,curAge-sepAge);
@@ -945,7 +955,7 @@ function compute(){
       var perp=peModes.r==='p'?psnow*gv('pr-p')/100:gv('pr-d');
       atB+=pep/2;arB+=perp/2;
     }
-    portH.push({age:curAge,val:Math.round(atB+arB+caB)});
+    portH.push({age:curAge,val:Math.round(atB+arB+caB+ca2B)});
     if(curAge<=sepAge){
       runCr+=1;
       var f2=getFAE(anns.slice(0,Math.min(anns.length,runCr)));
@@ -956,8 +966,8 @@ function compute(){
   // Add RE proceeds
   var re=calcProperties(retAge);
   atB+=re.proceedsPort;
-  portH[portH.length-1].val=Math.round(atB+arB+caB);
-  var andyPort=atB+arB+caB,portSWR=andyPort*swr/12;
+  portH[portH.length-1].val=Math.round(atB+arB+caB+ca2B);
+  var andyPort=atB+arB+caB+ca2B,portSWR=andyPort*swr/12;
   // Megan IRAs + 401k
   var mtB=gv('mt-b'),mrB=gv('mr-b'),mtRR=gv('mt-r')/100,mrRR=gv('mr-r')/100;
   var mPortH=[{age:mAge,val:Math.round(mtB+mrB)}];
@@ -987,7 +997,7 @@ function compute(){
     andyPort:andyPort,mPort:mPort,totPort:totPort,portSWR:portSWR,mSWR:mSWR,portWithdraw:portWithdraw,
     posItems:posItems,negItems:negItems,total:total,retAge:retAge,colAge:colAge,
     portH:portH,mPortH:mPortH,penH:penH,hi:hi,esop:esop,xi:xi,ins:ins,re:re,
-    atBal:atB,arBal:arB,caBal:caB,mtBal:mtB,mrBal:mrB,mRetAge:mRet,mSSAge:mSSAge,sepAge:sepAge,ssAge:ssAge};
+    atBal:atB,arBal:arB,caBal:caB,ca2Bal:ca2B,mtBal:mtB,mrBal:mrB,mRetAge:mRet,mSSAge:mSSAge,sepAge:sepAge,ssAge:ssAge};
 }
 
 // ── SALARY TABLE ──────────────────────────────────────────────────────────────
@@ -1236,6 +1246,7 @@ try{
   var vf=$('vfill');if(vf)vf.style.width=vp+'%';
   _t('vnote','Vesting: '+vp+'% ('+eys+' yr'+(eys===1?'':'s')+' at Flat Branch)');
   var d=compute();
+  _rbData=d; // set immediately so ribbon always has data
   _t('fv',fmt(d.fae));_t('fyrs',Math.round(d.totCr*10)/10);
   _t('fpf',fmo(d.penFull));_t('fpc',fmo(d.penMo));
   _t('sa',fmt(ab)+' \u00b7 separates at '+sepAge);
@@ -1249,9 +1260,9 @@ try{
   drawTimeline(tl);
   // Portfolio summary
   _t('rb3',fmt(d.totPort+d.re.totalEquityNow+(d.ins?d.ins.totalCV:0)));
-  var startBals=gv('at-b')+gv('ar-b')+gv('mt-b')+gv('mr-b')+gv('ca-b');
+  var startBals=gv('at-b')+gv('ar-b')+gv('mt-b')+gv('mr-b')+gv('ca-b')+gv('ca2-b');
   _t('sinv',fmt(startBals)+' current \u00b7 '+fmt(d.totPort)+' at retirement');
-  _h('invsum','Andy Trad: '+fmt(d.atBal)+' \u00b7 Andy Roth: '+fmt(d.arBal)+'<br>Megan Trad: '+fmt(d.mtBal)+' \u00b7 Megan Roth: '+fmt(d.mrBal)+'<br>Savings: '+fmt(d.caBal)+(d.xi.totalBal>0?' \u00b7 Extra: '+fmt(d.xi.totalBal):'')+' \u00b7 <strong>Total: '+fmt(d.totPort)+'</strong>');
+  _h('invsum','Andy Trad: '+fmt(d.atBal)+' \u00b7 Andy Roth: '+fmt(d.arBal)+'<br>Megan Trad: '+fmt(d.mtBal)+' \u00b7 Megan Roth: '+fmt(d.mrBal)+'<br>PHCU: '+fmt(d.caBal)+' \u00b7 Marcus: '+fmt(d.ca2Bal)+(d.xi.totalBal>0?' \u00b7 Extra: '+fmt(d.xi.totalBal):'')+' \u00b7 <strong>Total: '+fmt(d.totPort)+'</strong>');
   // Real estate subtitle
   _t('sre',fmt(gv('p1val')-gv('p1bal')+Math.max(0,gv('p2val')-gv('p2bal')))+' current equity \u00b7 Orchard sells at '+gv('p2sale'));
   // ESOP
@@ -1298,10 +1309,10 @@ try{
   _h('sres',fmo(d.total)+' / mo (all streams active at age '+(d.ssAge||70)+')');
   // Render dynamic lists
   renderPolicies();renderExtraInvestments();renderProperties();
-  _rbData=d;buildMilestoneBtns(d);rbUpdate();
   // Header date
   var hd=$('hdr-date');
   if(hd){var m=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];hd.textContent=m[_today.getMonth()]+' '+CY;}
+  buildMilestoneBtns(_rbData);rbUpdate();
 }catch(e){var rb=$('rb-streams');if(rb)rb.innerHTML='<span style="color:#DC2626;font-size:11px">Error: '+e.message+'</span>';console.error(e);}
 }
 
@@ -1371,14 +1382,17 @@ function rbIncomAt(andyAge, d){
 function rbPortfolioAt(andyAge, d){
   if(!d) return 0;
   var portH = d.portH || [], mPortH = d.mPortH || [];
-  // Andy portfolio at this age
+  // Andy+savings portfolio at this age
   var ap = portH.find(function(p){ return p.age === andyAge; });
-  var andyVal = ap ? ap.val : (portH.length ? portH[portH.length-1].val : 0);
-  // Megan portfolio — find by her equivalent age
+  var andyVal = ap ? ap.val : (andyAge >= (d.retAge||65) && portH.length ? portH[portH.length-1].val : 0);
+  // Megan portfolio at her equivalent age
   var mMegAge = gv('mag') + (andyAge - CA);
   var mp = mPortH.find(function(p){ return p.age === mMegAge; });
-  var meganVal = mp ? mp.val : (andyAge >= gv('mret') && mPortH.length ? mPortH[mPortH.length-1].val : 0);
-  return Math.round(andyVal + meganVal);
+  var meganVal = mp ? mp.val : (mMegAge >= gv('mret') && mPortH.length ? mPortH[mPortH.length-1].val : 0);
+  var total = andyVal + meganVal;
+  // Add RE equity (Approach Rd retained — not in portH)
+  if(d.re && d.re.totalEquityNow) total += d.re.totalEquityNow;
+  return Math.round(total);
 }
 
 function rbUpdate(){
