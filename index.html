@@ -11,7 +11,7 @@ body{font-family:system-ui,-apple-system,sans-serif;background:var(--g50);color:
 .hdr{background:var(--navy);color:#fff;padding:.9rem 1rem .7rem;text-align:center;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.2);}
 .hdr h1{font-size:1.1rem;font-weight:600;margin-bottom:2px;}
 .hdr p{font-size:.68rem;color:rgba(255,255,255,.55);}
-.rb{background:var(--w);border-bottom:1px solid var(--g200);padding:.5rem .75rem;position:sticky;top:60px;z-index:90;box-shadow:0 1px 4px rgba(0,0,0,.06);}
+.rb{background:var(--w);border-bottom:1px solid var(--g200);padding:.5rem .75rem;position:sticky;top:0;z-index:89;box-shadow:0 1px 4px rgba(0,0,0,.06);}
 .main{padding:.8rem;max-width:640px;margin:0 auto;padding-bottom:3rem;}
 .card{background:var(--w);border:1px solid var(--g200);border-radius:var(--r);margin-bottom:.65rem;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.04);}
 .ch{display:flex;align-items:center;justify-content:space-between;padding:.7rem .9rem;cursor:pointer;user-select:none;gap:8px;}
@@ -94,12 +94,12 @@ canvas{display:block;width:100%!important;}
 </style>
 </head>
 <body>
-<div class="hdr">
+<div class="hdr" id="main-hdr">
   <h1>Retirement Calculator</h1>
   <p>Weaver Household &bull; <span id="hdr-date"></span></p>
   <button onclick="window.print()" style="margin-top:5px;padding:4px 13px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);border-radius:20px;color:#fff;font-size:11px;cursor:pointer;font-family:inherit">&#128438; Save to PDF</button>
 </div>
-<div class="rb">
+<div class="rb" id="main-rb">
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
     <div style="text-align:center">
       <div style="font-size:9px;font-weight:600;color:var(--g400);text-transform:uppercase;letter-spacing:.06em;margin-bottom:2px">Net / Month</div>
@@ -468,9 +468,11 @@ canvas{display:block;width:100%!important;}
 
     <div class="csec">
       <div class="cttl">Household income timeline</div>
-      <div class="cleg" id="tl-legend"></div>
+      <p style="font-size:12px;color:var(--g700);line-height:1.6;margin-bottom:7px">
+        Each bar represents one year of household income stacked by source. <strong>Muted bars</strong> are working/accumulation years — salary is the primary income. <strong>Bright bars</strong> are retirement years where income shifts to pension, Social Security, and portfolio withdrawals. The dashed vertical lines mark each major milestone. The <span style="color:#92400E;font-weight:600">amber shading</span> highlights the gap years where Megan has retired but Andy's SS hasn't started yet — this is the period of heaviest portfolio reliance and the most important sequencing risk to manage.
+      </p>
       <div id="gap-warn" class="ibox ibox-a" style="display:none"></div>
-      <div style="position:relative;height:260px"><canvas id="ctimeline" width="600" height="260"></canvas></div>
+      <div style="position:relative;height:340px"><canvas id="ctimeline" width="600" height="280"></canvas></div>
     </div>
 
     <div class="csec">
@@ -577,6 +579,11 @@ function tc(id){
   b.classList.toggle('op',!op);
   if(c)c.classList.toggle('op',!op);
   if(h)h.classList.toggle('op',!op);
+  // Redraw charts when Projections card opens so they render at full resolution
+  if(!op && id==='res' && _rbData){
+    // Use requestAnimationFrame so the card is fully laid out before drawing
+    requestAnimationFrame(function(){ u(); });
+  }
 }
 function tsal(){salOpen=!salOpen;var w=$('salwrap');if(w)w.style.display=salOpen?'block':'none';var v=$('vsal');if(v)v.classList.toggle('op',salOpen);}
 function tps(){psOn=!psOn;var b=$('tps');if(b){b.textContent=psOn?'On':'Off';b.classList.toggle('on',psOn);}var p=$('psi');if(p)p.classList.toggle('sh',psOn);u();}
@@ -1030,9 +1037,19 @@ function cEd(yr){delete ov[yr];editYr=null;u();}
 // ── CANVAS HELPERS ────────────────────────────────────────────────────────────
 function initCanvas(id,h){
   var c=$(id);if(!c)return null;
-  var dpr=window.devicePixelRatio||1,pw=c.parentElement?c.parentElement.clientWidth||300:300;
-  c.width=pw*dpr;c.height=h*dpr;c.style.width=pw+'px';c.style.height=h+'px';
-  var ctx=c.getContext('2d');ctx.scale(dpr,dpr);ctx.clearRect(0,0,pw,h);
+  var dpr=Math.max(window.devicePixelRatio||1, 2); // force min 2x for sharpness
+  // getBoundingClientRect gives true rendered width even on mobile
+  var rect=c.parentElement?c.parentElement.getBoundingClientRect():null;
+  var pw=rect&&rect.width>0?Math.round(rect.width):(c.parentElement?c.parentElement.offsetWidth||300:300);
+  if(pw<10)pw=300; // safety fallback
+  c.width=Math.round(pw*dpr);
+  c.height=Math.round(h*dpr);
+  c.style.width=pw+'px';
+  c.style.height=h+'px';
+  var ctx=c.getContext('2d');
+  ctx.setTransform(1,0,0,1,0,0); // reset any previous transform
+  ctx.scale(dpr,dpr);
+  ctx.clearRect(0,0,pw,h);
   return{ctx:ctx,w:pw,h:h};
 }
 function drawGrid(ctx,pad,cw,ch,maxV,minA,maxA,ticks,rightLabel){
@@ -1085,53 +1102,171 @@ function buildTimeline(d){
 }
 
 function drawTimeline(tl){
-  var cv=initCanvas('ctimeline',260);if(!cv)return;
-  var ctx=cv.ctx,w=cv.w,pad={l:46,r:8,t:14,b:32};
-  var cw=w-pad.l-pad.r,ch=cv.h-pad.t-pad.b;
-  var slices=tl.slices,maxV=0;
+  var c=$('ctimeline'); if(!c||!tl||!tl.slices) return;
+  var dpr=Math.ceil(window.devicePixelRatio||1);
+  var rect=c.parentElement.getBoundingClientRect();
+  var CW=Math.round(rect.width)||320;
+  var CH=340;
+  c.width=CW*dpr; c.height=CH*dpr;
+  c.style.width=CW+'px'; c.style.height=CH+'px';
+  var ctx=c.getContext('2d');
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+
+  var slices=tl.slices;
+  var pad={l:52,r:14,t:44,b:32};
+  var cw=CW-pad.l-pad.r, ch=CH-pad.t-pad.b;
+  var maxV=0;
   slices.forEach(function(s){if(s.total>maxV)maxV=s.total;});
   if(maxV<=0)return;
-  maxV*=1.08;
-  var minA=slices[0].age,maxA=slices[slices.length-1].age,span=maxA-minA;
+  maxV=Math.ceil(maxV/1000)*1000*1.06;
+
+  var minA=slices[0].age, maxA=slices[slices.length-1].age, span=maxA-minA;
+  var bw=Math.max(2, (cw/span)-0.8);
   function ax(a){return pad.l+(a-minA)/span*cw;}
   function ay(v){return pad.t+ch-(v/maxV*ch);}
-  var bw=Math.max(1.5,cw/span-0.5);
-  drawGrid(ctx,pad,cw,ch,maxV,minA,maxA,[0,.25,.5,.75,1]);
-  // Gap highlight
-  slices.forEach(function(s){
-    if(s.isGap){ctx.fillStyle='rgba(251,146,60,0.15)';ctx.fillRect(ax(s.age),pad.t,bw,ch);}
-  });
-  // Phase dividers + labels
-  tl.phases.forEach(function(p,i){
-    if(i===0)return;
-    var x=ax(p.age);
-    ctx.strokeStyle='rgba(27,53,88,0.2)';ctx.lineWidth=1.5;ctx.setLineDash([3,3]);
-    ctx.beginPath();ctx.moveTo(x,pad.t);ctx.lineTo(x,pad.t+ch);ctx.stroke();
-    ctx.setLineDash([]);
-    ctx.fillStyle='rgba(27,53,88,0.5)';ctx.font='bold 8px system-ui';
-    ctx.textAlign=i===tl.phases.length-1?'right':'left';ctx.textBaseline='top';
-    ctx.fillText(p.label,(i===tl.phases.length-1?x-2:x+2),pad.t+1);
-  });
-  // Stacked bars
-  var layers=['andySal','meganSal','portSWR','pension','meganSS','andySS'];
-  slices.forEach(function(s){
-    var x=ax(s.age),base=pad.t+ch;
-    ctx.globalAlpha=s.inRet?1:0.5;
-    layers.forEach(function(k){
-      var v=s[k]||0;if(v<=0)return;
-      var h2=v/maxV*ch;
-      ctx.fillStyle=TCOL[k];ctx.fillRect(x,base-h2,bw,h2);base-=h2;
-    });
-    ctx.globalAlpha=1;
-  });
-  // Gap label
-  var gSlices=slices.filter(function(s){return s.isGap;});
-  if(gSlices.length){
-    var gx1=ax(gSlices[0].age),gx2=ax(gSlices[gSlices.length-1].age)+bw;
-    ctx.fillStyle='#92400E';ctx.font='bold 9px system-ui';ctx.textAlign='center';ctx.textBaseline='bottom';
-    ctx.fillText('\u26a0 Heavy portfolio draw',gx1+(gx2-gx1)/2,pad.t+ch-4);
+
+  // ── Background ──────────────────────────────────────────────────────────
+  ctx.fillStyle='#F8FAFC';
+  ctx.fillRect(0,0,CW,CH);
+
+  // ── Gap zone ────────────────────────────────────────────────────────────
+  var gapSlices=slices.filter(function(s){return s.isGap;});
+  if(gapSlices.length){
+    var gx1=ax(gapSlices[0].age), gx2=ax(gapSlices[gapSlices.length-1].age)+bw;
+    ctx.fillStyle='rgba(251,146,60,0.12)';
+    ctx.fillRect(gx1,pad.t,gx2-gx1,ch);
   }
+
+  // ── Grid lines ──────────────────────────────────────────────────────────
+  var gridTicks=5;
+  for(var gi=0;gi<=gridTicks;gi++){
+    var gv2=maxV*gi/gridTicks;
+    var gy=ay(gv2);
+    ctx.beginPath();
+    ctx.strokeStyle=gi===0?'#CBD5E1':'#E2E8F0';
+    ctx.lineWidth=gi===0?1.5:1;
+    ctx.moveTo(pad.l,gy); ctx.lineTo(pad.l+cw,gy);
+    ctx.stroke();
+    // Y axis labels
+    ctx.fillStyle='#94A3B8';
+    ctx.font='600 10px system-ui';
+    ctx.textAlign='right';
+    ctx.textBaseline='middle';
+    var label=gv2>=1000?'$'+(gv2/1000).toFixed(gv2%1000===0?0:1)+'k':'$'+Math.round(gv2);
+    ctx.fillText(label, pad.l-6, gy);
+  }
+
+  // ── X axis age labels ────────────────────────────────────────────────────
+  ctx.fillStyle='#94A3B8';
+  ctx.font='600 10px system-ui';
+  ctx.textAlign='center';
+  ctx.textBaseline='top';
+  var ageStep=Math.ceil(span/9);
+  for(var a=minA;a<=maxA;a+=ageStep){
+    ctx.fillText(a, ax(a)+bw/2, pad.t+ch+6);
+  }
+
+  // ── Stacked bars ────────────────────────────────────────────────────────
+  var layers=['andySal','meganSal','portSWR','pension','meganSS','andySS'];
+  var palette={
+    andySal:'#1B3558', meganSal:'#BE185D',
+    portSWR:'#0D9488', pension:'#D97706',
+    meganSS:'#DB2777', andySS:'#2563EB'
+  };
+  slices.forEach(function(s){
+    var x=ax(s.age), base=pad.t+ch;
+    var alpha=s.inRet?1:0.38;
+    layers.forEach(function(k){
+      var v=s[k]||0; if(v<=0)return;
+      var barH=v/maxV*ch;
+      ctx.globalAlpha=alpha;
+      ctx.fillStyle=palette[k];
+      ctx.fillRect(Math.round(x),Math.round(base-barH),Math.ceil(bw),Math.ceil(barH));
+      base-=barH;
+    });
+  });
+  ctx.globalAlpha=1;
+
+  // ── Phase dividers + labels ──────────────────────────────────────────────
+  var phases=tl.phases;
+  for(var pi=1;pi<phases.length;pi++){
+    var p=phases[pi];
+    var px2=ax(p.age);
+    // Dashed line
+    ctx.save();
+    ctx.strokeStyle='rgba(30,41,59,0.35)';
+    ctx.lineWidth=1.5;
+    ctx.setLineDash([4,4]);
+    ctx.beginPath(); ctx.moveTo(px2,pad.t); ctx.lineTo(px2,pad.t+ch);
+    ctx.stroke();
+    ctx.restore();
+    // Label pill at top
+    ctx.font='bold 9px system-ui';
+    var lw=ctx.measureText(p.label).width;
+    var isLast=pi===phases.length-1;
+    var pillX=isLast?px2-lw-14:px2+4;
+    // Pill background
+    ctx.fillStyle='rgba(30,41,59,0.82)';
+    roundRect(ctx, pillX, pad.t-18, lw+10, 16, 4);
+    ctx.fill();
+    // Pill text
+    ctx.fillStyle='#fff';
+    ctx.textAlign='left';
+    ctx.textBaseline='middle';
+    ctx.fillText(p.label, pillX+5, pad.t-10);
+  }
+
+  // ── Gap label ────────────────────────────────────────────────────────────
+  if(gapSlices.length){
+    var gx1b=ax(gapSlices[0].age), gx2b=ax(gapSlices[gapSlices.length-1].age)+bw;
+    var gmid=gx1b+(gx2b-gx1b)/2;
+    ctx.font='bold 9px system-ui';
+    var glw=ctx.measureText('⚠ Gap years').width;
+    ctx.fillStyle='rgba(180,83,9,0.85)';
+    roundRect(ctx, gmid-glw/2-5, pad.t+ch-26, glw+10, 16, 4);
+    ctx.fill();
+    ctx.fillStyle='#fff';
+    ctx.textAlign='center';
+    ctx.textBaseline='middle';
+    ctx.fillText('⚠ Gap years', gmid, pad.t+ch-18);
+  }
+
+  // ── Legend — drawn below chart ──────────────────────────────────────────
+  var legendItems=[
+    {k:'andySal',l:"Andy's salary"},{k:'meganSal',l:"Megan's salary"},
+    {k:'portSWR',l:'Portfolio SWR'},{k:'pension',l:'SURS pension'},
+    {k:'meganSS',l:"Megan SS"},{k:'andySS',l:'Andy SS'}
+  ];
+  var legTop=pad.t+ch+pad.b+4;
+  var itemW=Math.floor(cw/3);
+  ctx.textBaseline='middle';
+  legendItems.forEach(function(item,i){
+    var col=i%3, row=Math.floor(i/3);
+    var lx2=pad.l+col*itemW;
+    var ly2=legTop+row*16;
+    ctx.fillStyle=palette[item.k];
+    roundRect(ctx,lx2,ly2,10,10,2); ctx.fill();
+    ctx.fillStyle='#334155';
+    ctx.font='10px system-ui';
+    ctx.textAlign='left';
+    ctx.fillText(item.l, lx2+14, ly2+5);
+  });
 }
+
+function roundRect(ctx, x, y, w, h, r){
+  ctx.beginPath();
+  ctx.moveTo(x+r,y);
+  ctx.lineTo(x+w-r,y);
+  ctx.quadraticCurveTo(x+w,y,x+w,y+r);
+  ctx.lineTo(x+w,y+h-r);
+  ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+  ctx.lineTo(x+r,y+h);
+  ctx.quadraticCurveTo(x,y+h,x,y+h-r);
+  ctx.lineTo(x,y+r);
+  ctx.quadraticCurveTo(x,y,x+r,y);
+  ctx.closePath();
+}
+
 
 function updateRibbon(d,tl){
   var mSSAge=d.mSSAge||67,sepAge=d.sepAge||65,colAge=d.colAge||65,ssAge=d.ssAge||70;
@@ -1230,6 +1365,9 @@ function drawPP(series){
 
 // ── MAIN UPDATE ───────────────────────────────────────────────────────────────
 function u(){
+  // Keep ribbon stuck below header
+  var hdrEl=$('main-hdr'), rbEl=$('main-rb');
+  if(hdrEl&&rbEl)rbEl.style.top=hdrEl.offsetHeight+'px';
 try{
   var sepAge=gv('sep'),recs=buildRecs(sepAge);
   renderSal(recs,sepAge);
@@ -1259,7 +1397,7 @@ try{
   if(gw){var mRetV=gv('mret'),ssAgeV=gv('ssa');if(ssAgeV>mRetV){gw.style.display='block';gw.textContent='\u26a0 Gap years age '+mRetV+'\u2013'+ssAgeV+': Megan retired but Andy SS not yet collecting. Portfolio carries the shortfall for '+(ssAgeV-mRetV)+' years.';}else{gw.style.display='none';}}
   drawTimeline(tl);
   // Portfolio summary
-  _t('rb3',fmt(d.totPort+d.re.totalEquityNow+(d.ins?d.ins.totalCV:0)));
+  _t('rb3',fmt(d.totPort));
   var startBals=gv('at-b')+gv('ar-b')+gv('mt-b')+gv('mr-b')+gv('ca-b')+gv('ca2-b');
   _t('sinv',fmt(startBals)+' current \u00b7 '+fmt(d.totPort)+' at retirement');
   _h('invsum','Andy Trad: '+fmt(d.atBal)+' \u00b7 Andy Roth: '+fmt(d.arBal)+'<br>Megan Trad: '+fmt(d.mtBal)+' \u00b7 Megan Roth: '+fmt(d.mrBal)+'<br>PHCU: '+fmt(d.caBal)+' \u00b7 Marcus: '+fmt(d.ca2Bal)+(d.xi.totalBal>0?' \u00b7 Extra: '+fmt(d.xi.totalBal):'')+' \u00b7 <strong>Total: '+fmt(d.totPort)+'</strong>');
@@ -1294,6 +1432,7 @@ try{
   // Drawdown
   var infl=gv('infl')/100,retRR=gv('rtr')/100,projAge=gv('page');
   var dd=calcDD(d.totPort,d.portWithdraw,d.penMo,d.yourSS+d.mSS,d.retAge,projAge,retRR,infl);
+  _rbData.dd=dd; // store for ribbon portfolio lookup
   var dn=$('ddnote');
   if(dn){if(dd.dep){dn.style.display='block';dn.className='ddnote bad';dn.textContent='Portfolio depletes ~age '+dd.dep+' withdrawing '+fmo(d.portWithdraw)+'/mo. Pension ('+fmo(d.penMo)+') and SS continue for life.';}else{dn.style.display='block';dn.className='ddnote good';dn.textContent='Portfolio sustains '+fmo(d.portWithdraw)+'/mo withdrawals through age '+projAge+' at '+fp(gv('rtr'))+'% return. \u2713';}}
   var ddl=$('dd-legend');
@@ -1381,18 +1520,27 @@ function rbIncomAt(andyAge, d){
 
 function rbPortfolioAt(andyAge, d){
   if(!d) return 0;
-  var portH = d.portH || [], mPortH = d.mPortH || [];
-  // Andy+savings portfolio at this age
-  var ap = portH.find(function(p){ return p.age === andyAge; });
-  var andyVal = ap ? ap.val : (andyAge >= (d.retAge||65) && portH.length ? portH[portH.length-1].val : 0);
-  // Megan portfolio at her equivalent age
-  var mMegAge = gv('mag') + (andyAge - CA);
-  var mp = mPortH.find(function(p){ return p.age === mMegAge; });
-  var meganVal = mp ? mp.val : (mMegAge >= gv('mret') && mPortH.length ? mPortH[mPortH.length-1].val : 0);
-  var total = andyVal + meganVal;
-  // Add RE equity (Approach Rd retained — not in portH)
-  if(d.re && d.re.totalEquityNow) total += d.re.totalEquityNow;
-  return Math.round(total);
+  var retAge = d.retAge || 65;
+
+  if(andyAge < retAge){
+    // Pre-retirement: read investable portfolio from accumulation curves
+    var portH = d.portH || [], mPortH = d.mPortH || [];
+    var ap = portH.find(function(p){ return p.age === andyAge; });
+    var andyVal = ap ? ap.val : 0;
+    var mMegAge = gv('mag') + (andyAge - CA);
+    var mp = mPortH.find(function(p){ return p.age === mMegAge; });
+    var meganVal = mp ? mp.val : 0;
+    return Math.round(andyVal + meganVal);
+  }
+
+  // At or after retirement: use drawdown series for investable portfolio
+  if(d.dd && d.dd.series){
+    var ds = d.dd.series.find(function(s){ return s.age === andyAge; });
+    if(ds) return Math.round(ds.bal);
+    var last = d.dd.series[d.dd.series.length-1];
+    return last ? Math.round(last.bal) : 0;
+  }
+  return d.totPort || 0;
 }
 
 function rbUpdate(){
@@ -1401,6 +1549,7 @@ function rbUpdate(){
   if(!d) return;
   var net = rbIncomAt(age, d);
   var port = rbPortfolioAt(age, d);
+
   // What's active at this age
   var mAge=gv('mag'), mRet=gv('mret'), mSSAge=gv('mssa');
   var sepAge=gv('sep'), colAge=gv('col'), ssAge=gv('ssa'), drawAge=gv('draw')||mRet;
