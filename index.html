@@ -549,10 +549,10 @@ var ID_MAP={
   'ab':'iab','ab-g':'iabp','abd':'iabd','sep':'isep','col':'icol','ss':'iss','ssa':'issa',
   'dcr-p':'idcrp','dct-p':'idctp','dcr-d':'idcrd','dct-d':'idctd','dcg-p':'idcgp',
   'pss':'ipss','psr':'ipsr','psg':'ipsg','pe-p':'ipep','pr-p':'iprp',
-  'at-b':'iatb','at-r':'iatr','at-cp':'iatcp',  // note: IRA ids use at- prefix
-  'ar-b':'iarb','ar-r':'iarr','ar-cp':'iarcp',
-  'mt-b':'imtb','mt-r':'imtr','mt-cp':'imtcp',
-  'mr-b':'imrb','mr-r':'imrr','mr-cp':'imrcp',
+  'at-b':'iat-b','at-r':'iat-r','at-cp':'iat-cp',  // note: IRA ids use at- prefix
+  'ar-b':'iar-b','ar-r':'iar-r','ar-cp':'iar-cp',
+  'mt-b':'imt-b','mt-r':'imt-r','mt-cp':'imt-cp',
+  'mr-b':'imr-b','mr-r':'imr-r','mr-cp':'imr-cp',
   'ca-b':'icab','ca-r':'icar','ca-cp':'ica-cp','ca2-b':'ica2b','ca2-r':'ica2r','ca2-cp':'ica2-cp','ca2-cd':'ica2-cd',
   'swr':'iswr','infl':'iinfl','rtr':'irtr','page':'ipage',
   'h1':'ih1','h2':'ih2','h3':'ih3','h4':'ih4','h5':'ih5',
@@ -1466,10 +1466,10 @@ var RNG=[
   ['sss','iss',0],['sssa','issa',0],
   ['sdcr-p','idcrp',1],['sdct-p','idctp',1],['sdcr-d','idcrd',0],['sdct-d','idctd',0],['sdcg-p','idcgp',1],
   ['spss','ipss',0],['spsr','ipsr',0],['spsg','ipsg',1],['spe-p','ipep',1],['spr-p','iprp',1],
-  ['sat-b','iatb',0],['sat-r','iatr',1],['sat-cp','iatcp',1],
-  ['sar-b','iarb',0],['sar-r','iarr',1],['sar-cp','iarcp',1],
-  ['smt-b','imtb',0],['smt-r','imtr',1],['smt-cp','imtcp',1],
-  ['smr-b','imrb',0],['smr-r','imrr',1],['smr-cp','imrcp',1],
+  ['sat-b','iat-b',0],['sat-r','iat-r',1],['sat-cp','iat-cp',1],
+  ['sar-b','iar-b',0],['sar-r','iar-r',1],['sar-cp','iar-cp',1],
+  ['smt-b','imt-b',0],['smt-r','imt-r',1],['smt-cp','imt-cp',1],
+  ['smr-b','imr-b',0],['smr-r','imr-r',1],['smr-cp','imr-cp',1],
   ['sca-b','icab',0],['sca-r','icar',1],['sca-cp','ica-cp',1],
   ['sswr','iswr',1],['sinfl','iinfl',1],['srtr','irtr',1],['spage','ipage',0],
   ['sh1','ih1',2],['sh2','ih2',2],['sh3','ih3',2],['sh4','ih4',0],['sh5','ih5',0],
@@ -1549,6 +1549,7 @@ function rbUpdate(){
   if(!d) return;
   var net = rbIncomAt(age, d);
   var port = rbPortfolioAt(age, d);
+
 
   // What's active at this age
   var mAge=gv('mag'), mRet=gv('mret'), mSSAge=gv('mssa');
