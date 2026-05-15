@@ -1500,10 +1500,9 @@ function rbIncomAt(andyAge, d){
   var drawAge=gv('draw')||mRet;
   var mMegAge = mAge + (andyAge - CA);
   var total = 0;
-  // Portfolio SWR — compute from actual portfolio balance at this age
+  // Portfolio withdrawal — use fixed amount from compute (not recomputed from growing balance)
   if(andyAge >= drawAge){
-    var port = rbPortfolioAt(andyAge, d);
-    total += port * swr / 12;
+    total += d.portWithdraw;
   }
   // Pension — starts at max(sepAge, colAge)
   if(andyAge >= Math.max(sepAge, colAge)) total += d.penMo;
@@ -1521,7 +1520,6 @@ function rbIncomAt(andyAge, d){
 function rbPortfolioAt(andyAge, d){
   if(!d) return 0;
   var retAge = d.retAge || 65;
-
   if(andyAge < retAge){
     // Pre-retirement: read investable portfolio from accumulation curves
     var portH = d.portH || [], mPortH = d.mPortH || [];
